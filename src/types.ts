@@ -29,6 +29,7 @@ export interface AllowedRoot {
 
 export interface ContainerConfig {
   additionalMounts?: AdditionalMount[];
+  env?: Record<string, string>; // Extra env vars injected into the container (e.g. GH_TOKEN)
   timeout?: number; // Default: 300000 (5 minutes)
 }
 
