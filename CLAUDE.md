@@ -25,6 +25,39 @@ Single Node.js process with skill-based channel system. Channels (WhatsApp, Tele
 
 API keys, secret keys, OAuth tokens, and auth credentials are managed by the OneCLI gateway — which handles secret injection into containers at request time, so no keys or tokens are ever passed to containers directly. Run `onecli --help`.
 
+**Exception: GitHub CLI (`gh`).** The OneCLI proxy injects auth headers into HTTPS requests, but `gh` checks for local credentials before making any network request. It won't reach the proxy. To work around this, `GH_TOKEN` is injected as an env var via `containerConfig.env` per group. Tokens are stored in the SQLite DB (`registered_groups.container_config`).
+
+## Per-Group Container Configuration
+
+Each group's `containerConfig` (stored in `registered_groups.container_config` as JSON) supports:
+
+- **`additionalMounts`** — extra host paths mounted into the container at `/workspace/extra/{name}`. Validated against the mount allowlist at `~/.config/nanoclaw/mount-allowlist.json` (stored outside the project root so containers can't tamper with it).
+- **`env`** — extra environment variables injected into the container (e.g. `GH_TOKEN`). Use this for credentials that tools need as env vars rather than HTTP headers.
+- **`timeout`** — container timeout override in milliseconds.
+
+Example `container_config` JSON:
+```json
+{
+  "additionalMounts": [
+    { "hostPath": "~/Code", "containerPath": "Code", "readonly": false }
+  ],
+  "env": { "GH_TOKEN": "github_pat_xxx" }
+}
+```
+
+The mount allowlist (`~/.config/nanoclaw/mount-allowlist.json`) controls which host paths are allowed and whether read-write is permitted:
+```json
+{
+  "allowedRoots": [
+    { "path": "~/Code", "allowReadWrite": true, "description": "Dev projects" }
+  ],
+  "blockedPatterns": [],
+  "nonMainReadOnly": true
+}
+```
+
+`nonMainReadOnly: true` forces all non-main group mounts to read-only regardless of what they request.
+
 ## Skills
 
 Four types of skills exist in NanoClaw. See [CONTRIBUTING.md](CONTRIBUTING.md) for the full taxonomy and guidelines.
