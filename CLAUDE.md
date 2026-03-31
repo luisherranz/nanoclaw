@@ -20,6 +20,9 @@ Single Node.js process with skill-based channel system. Channels (WhatsApp, Tele
 | `src/db.ts` | SQLite operations |
 | `groups/{name}/CLAUDE.md` | Per-group memory (isolated) |
 | `container/skills/` | Skills loaded inside agent containers (browser, status, formatting) |
+| `container/agent-runner/src/lcm-store.ts` | LCM SQLite database (messages + summary DAG) |
+| `container/agent-runner/src/lcm-helpers.ts` | LCM pure functions (context detection, proactive compaction, transcript parsing) |
+| `container/agent-runner/src/lcm-summarize.ts` | LCM summarization (leaf + condensed summaries) |
 
 ## Secrets / Credentials / Proxy (OneCLI)
 
@@ -57,6 +60,19 @@ The mount allowlist (`~/.config/nanoclaw/mount-allowlist.json`) controls which h
 ```
 
 `nonMainReadOnly: true` forces all non-main group mounts to read-only regardless of what they request.
+
+## Lossless Context Management (LCM)
+
+LCM preserves conversation history across context compaction. When conversations exceed the context window, LCM persists messages to a per-group SQLite database and builds a DAG of hierarchical summaries. See [docs/lcm-spec.md](docs/lcm-spec.md) for the full specification.
+
+Key LCM environment variables (set via `containerConfig.env` or container defaults):
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `LCM_PROACTIVE_COMPACTION_THRESHOLD` | `75` | Context usage % triggering proactive compaction (0 = disabled) |
+| `LCM_SUMMARY_MODEL` | `claude-haiku-4-5-20251001` | Model used for generating summaries |
+| `LCM_CONTEXT_WINDOW_TOKENS` | `1000000` | Fallback context window size (auto-detected from SDK when possible) |
+| `LCM_FRESHNESS_WINDOW` | `32` | Messages protected from compaction |
 
 ## Skills
 
