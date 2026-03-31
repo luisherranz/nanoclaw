@@ -52,6 +52,35 @@ async function transcribeWithOpenAI(
   }
 }
 
+/**
+ * Transcribe an audio buffer (channel-agnostic).
+ * Returns the transcript text, or the fallback message on failure.
+ */
+export async function transcribeAudioBuffer(
+  buffer: Buffer,
+): Promise<string | null> {
+  const config = DEFAULT_CONFIG;
+
+  if (!config.enabled) {
+    return config.fallbackMessage;
+  }
+
+  if (!buffer || buffer.length === 0) {
+    console.error('Empty audio buffer');
+    return config.fallbackMessage;
+  }
+
+  console.log(`Transcribing audio: ${buffer.length} bytes`);
+
+  const transcript = await transcribeWithOpenAI(buffer, config);
+
+  if (!transcript) {
+    return config.fallbackMessage;
+  }
+
+  return transcript.trim();
+}
+
 export async function transcribeAudioMessage(
   msg: WAMessage,
   sock: WASocket,
