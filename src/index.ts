@@ -10,6 +10,7 @@ import {
   GROUPS_DIR,
   IDLE_TIMEOUT,
   MAX_MESSAGES_PER_PROMPT,
+  CREDENTIAL_PROXY_PORT,
   ONECLI_URL,
   POLL_INTERVAL,
   TIMEZONE,
@@ -28,6 +29,7 @@ import {
 import {
   cleanupOrphans,
   ensureContainerRuntimeRunning,
+  PROXY_BIND_HOST,
 } from './container-runtime.js';
 import {
   getAllChats,
@@ -64,6 +66,7 @@ import {
 import { startSessionCleanup } from './session-cleanup.js';
 import { startSchedulerLoop } from './task-scheduler.js';
 import { Channel, NewMessage, RegisteredGroup } from './types.js';
+import { startCredentialProxy } from './credential-proxy.js';
 import { logger } from './logger.js';
 
 // Re-export for backwards compatibility during refactor
@@ -570,6 +573,10 @@ function ensureContainerSystemRunning(): void {
 
 async function main(): Promise<void> {
   ensureContainerSystemRunning();
+
+  // Start credential proxy — containers connect here instead of directly to Anthropic
+  await startCredentialProxy(CREDENTIAL_PROXY_PORT, PROXY_BIND_HOST);
+
   initDatabase();
   logger.info('Database initialized');
   loadState();

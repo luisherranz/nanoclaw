@@ -13,6 +13,17 @@ CONTAINER_RUNTIME="${CONTAINER_RUNTIME:-container}"
 echo "Building NanoClaw agent container image..."
 echo "Image: ${IMAGE_NAME}:${TAG}"
 
+# Apple Container's buildkit chokes on symlinks in node_modules when building
+# the context archive (.dockerignore doesn't help — the error occurs before
+# ignore rules are applied). Move node_modules out during build.
+NM_DIR="$SCRIPT_DIR/agent-runner/node_modules"
+NM_BACKUP=""
+if [ -d "$NM_DIR" ]; then
+  NM_BACKUP=$(mktemp -d)
+  mv "$NM_DIR" "$NM_BACKUP/node_modules"
+  trap 'mv "$NM_BACKUP/node_modules" "$NM_DIR" 2>/dev/null; rm -rf "$NM_BACKUP"' EXIT
+fi
+
 ${CONTAINER_RUNTIME} build -t "${IMAGE_NAME}:${TAG}" .
 
 echo ""
