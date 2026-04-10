@@ -281,6 +281,14 @@ async function buildContainerArgs(
     args.push('-e', 'HOME=/home/node');
   }
 
+  // Pass through LCM configuration from host environment
+  if (process.env.CLAUDE_CODE_AUTO_COMPACT_WINDOW) {
+    args.push(
+      '-e',
+      `CLAUDE_CODE_AUTO_COMPACT_WINDOW=${process.env.CLAUDE_CODE_AUTO_COMPACT_WINDOW}`,
+    );
+  }
+
   // Inject per-group env vars (e.g. GH_TOKEN)
   if (extraEnv) {
     for (const [key, value] of Object.entries(extraEnv)) {
